@@ -1,0 +1,207 @@
+cabal-version:      3.4
+name:               minter-plutus
+version:            0.1.0.0
+
+-- A short (one-line) description of the package.
+-- synopsis:
+
+-- A longer description of the package.
+-- description:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+
+license: Apache-2.0
+license-files: LICENSE
+author:             Your name
+maintainer:         Your email
+
+data-files:
+  config/settings.yml
+
+-- A copyright notice.
+-- copyright:
+-- category:
+-- extra-source-files: CHANGELOG.md
+
+flag defer-plugin-errors
+    description:
+        Defer errors from the plugin, useful for things like Haddock that can't handle it.
+    default: False
+    manual: True
+
+common lang
+    default-language:   Haskell2010
+    default-extensions: LambdaCase
+                        OverloadedStrings
+                        StandaloneDeriving
+                        NoImplicitPrelude
+                        ImportQualifiedPost
+                        TemplateHaskell
+                        RecordWildCards
+                        DataKinds
+                        NamedFieldPuns
+                        TypeApplications
+                        ScopedTypeVariables
+                        TypeFamilies
+                        MultiParamTypeClasses
+                        DeriveGeneric
+                        DeriveAnyClass
+                        DerivingStrategies
+                        FlexibleInstances
+                        BlockArguments
+                        TupleSections
+                        DuplicateRecordFields
+                        InstanceSigs
+    ghc-options:
+      -Wall -Wnoncanonical-monad-instances
+      -Wincomplete-uni-patterns -Wincomplete-record-updates
+      -Wredundant-constraints -Widentities -rtsopts
+      -- See Plutus Tx readme
+      -- Fixes bugs like "GHC Core to PLC plugin: Reference to a name which is not a local, a builtin, or an external INLINABLE function: foldMap OtherCon []"
+      -- E.g. https://github.com/input-output-hk/plutus/issues/4045
+      -fobject-code -fno-ignore-interface-pragmas -fno-omit-interface-pragmas -fno-specialise
+    if flag(defer-plugin-errors)
+        ghc-options: -fplugin-opt PlutusTx.Plugin:defer-errors
+
+library
+    import: lang
+    exposed-modules:
+      Cardano.Plutus.Test
+      Cardano.Address
+      Cardano.Plutus.FromBS
+      Cardano.Plutus.OnChain.Bridge.Fungible
+      Cardano.Plutus.OnChain.Bridge.Hold
+      Cardano.Plutus.OnChain.Bridge.NFT
+      Cardano.Plutus.OnChain.Bridge.NonceInteger
+      Cardano.Plutus.OnChain.Bridge.NonceSHA3_256
+      Cardano.Plutus.OnChain.Bridge.UniqueSeed
+      Cardano.Plutus.OnChain.Bridge.Withdraw
+      Cardano.Plutus.OnChain.Bridge.WithdrawFactory
+
+      Cardano.Plutus.OnChain.FeeMinter.Fungible
+      Cardano.Plutus.OnChain.FeeMinter.NFT
+      Cardano.Plutus.OnChain.FeeMinter.NFTCollection
+      Cardano.Plutus.OnChain.FeeMinter.FeeCollector
+      Cardano.Plutus.OnChain.FeeMinter.FeeExchangeCollector
+      Cardano.Plutus.OnChain.FeeMinter.FeeExchangeCollectorDatum
+      Cardano.Plutus.OnChain.FeeMinter.ScriptHolder
+      Cardano.Plutus.OnChain.FeeMinter.TokenOracle
+      Cardano.Plutus.OnChain.FeeMinter.UniqueNFT
+      Cardano.Plutus.OnChain.FeeMinter.Test
+
+      Cardano.Plutus.Common
+      Cardano.Plutus.V1.Common
+      Cardano.Plutus.V2.Common
+      Cardano.Plutus.V1.Contexts
+      Cardano.Plutus.V2.Contexts
+    other-modules:
+      Cardano.Plutus.ByteString
+      Cardano.Plutus.List
+      Cardano.Plutus.Sort
+      Cardano.Plutus.Validator
+    build-depends:
+      base >= 4.9 && < 5,
+      aeson,
+      bytestring,
+      containers,
+      freer-extras,
+      playground-common,
+      plutus-contract,
+      plutus-ledger,
+      plutus-ledger-api,
+      plutus-ledger-constraints,
+      plutus-script-utils,
+      plutus-tx,
+      plutus-tx-plugin,
+      text,
+      lens,
+      plutus-core,
+      data-default,
+      serialise,
+      cardano-api,
+      composition-prelude,
+      bech32,
+      base16-bytestring,
+      extra,
+      yesod-core >= 1.6.1.2 && < 1.7,
+      yesod >= 1.6.2 && < 1.7,
+      semialign,
+      these,
+      ghc-prim
+    hs-source-dirs: src
+
+executable minter-plutus-exe
+  import: lang
+  exposed-modules:
+    Cardano.Plutus.Test
+  main-is: Main.hs
+  hs-source-dirs: app
+  ghc-options:
+    -threaded
+  build-depends:
+    base >= 4.9 && < 5,
+    data-default,
+    plutus-contract,
+    plutus-pab,
+    minter-plutus,
+    aeson,
+    freer-simple,
+    prettyprinter,
+    freer-extras,
+    plutus-ledger,
+    plutus-ledger-api,
+    plutus-script-utils,
+    openapi3,
+    cardano-api,
+    composition-prelude,
+    bytestring,
+    plutus-tx,
+    base16-bytestring,
+    text,
+    extra
+
+
+executable minter-rest
+  import: lang
+  other-modules:
+    Minter.Application
+    Minter.Foundation
+    Minter.Import
+    Minter.Import.NoFoundation
+    Minter.Settings
+    Minter.Handler.Compiled
+    Minter.Handler.Ping
+    Minter.Handler.Test
+  main-is: Minter.hs
+  hs-source-dirs: app
+  ghc-options:
+    -threaded
+  build-depends:
+    base >= 4.9 && < 5,
+    data-default,
+    minter-plutus,
+    aeson,
+    freer-simple,
+    prettyprinter,
+    freer-extras,
+    openapi3,
+    composition-prelude,
+    bytestring,
+    hex-text,
+    base16-bytestring,
+    text,
+    extra,
+    yesod-core,
+    yesod,
+    classy-prelude-yesod,
+    wai,
+    wai-extra,
+    wai-cors,
+    warp,
+    plutus-ledger-api,
+    file-embed,
+    yaml,
+    template-haskell,
+    monad-logger,
+    fast-logger
